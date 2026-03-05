@@ -1,18 +1,20 @@
 // OrbitCanvas.tsx
 import React, { useEffect, useRef, useState } from "react";
 import type { Arm } from "./arm";
-import { getEndpoint, getArmSegments } from "./armMath";
+import { getArmSegments } from "./armMath";
 
 interface OrbitCanvasProps {
-  /** List of arms, from base to tip. */
   arms: Arm[];
-
-  /** Background color for the canvas. */
   backgroundColor?: string;
-
-  /** Global line width for both arms and trajectory. */
   lineWidth?: number;
 }
+
+type Point = { x: number; y: number };
+
+// 1 trail for each arm 
+type TrailMap = Record<string, Point[]>;
+
+const MAX_POINTS_PER_ARM = 5000;
 
 const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
   arms,
@@ -21,29 +23,24 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // We track time in seconds.
   const [time, setTime] = useState(0);
-
-  // Whether the animation is running (play / pause).
   const [running, setRunning] = useState(true);
-
-  // This flag is used to trigger a full clear of the canvas.
   const [clearRequested, setClearRequested] = useState(false);
 
-  // Store the last end-point to draw the trajectory line.
-  const lastPointRef = useRef<{ x: number; y: number } | null>(null);
+  // key = arm.id, value = the arm's trail point'
+  const [trailMap, setTrailMap] = useState<TrailMap>({});
 
-  // Handle the animation loop and time update.
+  /* ─── 1. Animation loop ───────────────────────────────────── */
+
   useEffect(() => {
     let animationFrameId: number;
     let lastTime = performance.now();
 
     const loop = (now: number) => {
-      const dt = (now - lastTime) / 1000; // convert ms to seconds
+      const dt = (now - lastTime) / 1000;
       lastTime = now;
 
       setTime((prev) => (running ? prev + dt : prev));
-
       animationFrameId = requestAnimationFrame(loop);
     };
 
@@ -51,7 +48,51 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
     return () => cancelAnimationFrame(animationFrameId);
   }, [running]);
 
-  // Handle drawing on the canvas whenever time, arms, or clearRequested change.
+  /* ─── 2. gather the trail point of its own arm ───────────────── */
+
+  useEffect(() => {
+    if (!running) return;
+    if (arms.length === 0) return;
+
+    // get all joint positions: points[0] = base, points[1] = arm0 end, ...
+    const points = getArmSegments(arms, time);
+    // points.length 應該 = arms.length + 1
+
+    setTrailMap((prev) => {
+      const next: TrailMap = { ...prev };
+
+      arms.forEach((arm, index) => {
+        if (!arm.draw) {
+          // if not drawing, can choose to keep old trail or clear it
+          // I choise to keep old trails when unchecking "draw" because it allows users to toggle visibility without losing the history, and they can clear trails separately with the "Clean Canvas" button if they want a fresh start. If you prefer to clear trails immediately when "draw" is unchecked, simply set next[arm.id] = [] in that case.
+          return;
+        }
+
+        const endPoint = points[index + 1]; // 第 index 支 arm 嘅末端
+        const list = next[arm.id] ? [...next[arm.id]] : [];
+        list.push({ x: endPoint.x, y: endPoint.y });
+
+        if (list.length > MAX_POINTS_PER_ARM) {
+          list.shift();
+        }
+
+        next[arm.id] = list;
+      });
+
+      // if arm removed, also clean up trailMap keys that are no longer valid
+      const validIds = new Set(arms.map((a) => a.id));
+      Object.keys(next).forEach((id) => {
+        if (!validIds.has(id)) {
+          delete next[id];
+        }
+      });
+
+      return next;
+    });
+  }, [time, arms, running]);
+
+  /* ─── 3. Draw ─────────────────────────────────────────────── */
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -62,41 +103,34 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
     const width = canvas.width;
     const height = canvas.height;
 
-    // If clearRequested is true, we reset the whole drawing state.
     if (clearRequested) {
-      // Clear the canvas.
       ctx.fillStyle = backgroundColor;
       ctx.fillRect(0, 0, width, height);
 
-      // Reset trajectory state.
-      lastPointRef.current = null;
-
-      // Reset the animation time to 0 seconds.
+      setTrailMap({});
       setTime(0);
-
-      // Reset the flag.
       setClearRequested(false);
       return;
     }
 
-    // Clear the canvas for the current frame.
-    //ctx.fillStyle = backgroundColor;
-    //ctx.fillRect(0, 0, width, height);
+    // Clearing the canvas each frame is necessary to redraw the arms and trails in their new positions.
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, 0, width, height);
 
-    // Move the origin to the center of the canvas.
     ctx.save();
     ctx.translate(width / 2, height / 2);
 
-    // Draw the arm bones if displayArm is true for any arm.
+    // 1) Draw all trails for each arm, using the points stored in trailMap.
+    drawAllTrails(ctx, arms, trailMap, lineWidth);
+
+    // 2) Draw current arms based on the current time, on top of the trails.
     drawArms(ctx, arms, time, lineWidth);
 
-    // Draw the trajectory of the end effector.
-    drawTrajectory(ctx, arms, time, lineWidth, lastPointRef);
-
     ctx.restore();
-  }, [time, arms, backgroundColor, lineWidth, clearRequested]);
+  }, [time, arms, backgroundColor, lineWidth, clearRequested, trailMap]);
 
-  // Keep canvas width in sync with its parent width (simple responsive behavior).
+  /* ─── 4. Resize ───────────────────────────────────────────── */
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -106,19 +140,17 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
       if (!parent) return;
 
       const rect = parent.getBoundingClientRect();
-      // You can adjust the height logic as needed.
       canvas.width = rect.width;
       canvas.height = 400;
 
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      // Every time we resize, we also clear the canvas and reset trajectory.
       ctx.fillStyle = backgroundColor;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      lastPointRef.current = null;
-      setTime(0);
+      // 轉尺寸時，清晒軌跡，時間不變
+      setTrailMap({});
     };
 
     resize();
@@ -126,19 +158,18 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
     return () => window.removeEventListener("resize", resize);
   }, [backgroundColor]);
 
-  /** Toggle between play and pause states. */
+  /* ─── 5. Handlers ─────────────────────────────────────────── */
+
   const handleTogglePlay = () => {
     setRunning((prev) => !prev);
   };
 
-  /** Clear the canvas, trajectory, and reset time. */
   const handleClearCanvas = () => {
     setClearRequested(true);
   };
 
   return (
     <div style={{ width: "100%" }}>
-      {/* Controls */}
       <div
         style={{
           display: "flex",
@@ -150,11 +181,9 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
         <button onClick={handleTogglePlay}>
           {running ? "Pause" : "Play"}
         </button>
-
         <button onClick={handleClearCanvas}>Clean Canvas</button>
       </div>
 
-      {/* Canvas */}
       <canvas
         ref={canvasRef}
         style={{
@@ -170,9 +199,8 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
 
 export default OrbitCanvas;
 
-/**
- * Draw the arm bones (segments) based on displayArm flag.
- */
+/* ───────────────────── helper functions ────────────────────── */
+
 function drawArms(
   ctx: CanvasRenderingContext2D,
   arms: Arm[],
@@ -182,10 +210,8 @@ function drawArms(
   if (arms.length === 0) return;
 
   const points = getArmSegments(arms, time);
-
   ctx.lineWidth = lineWidth;
 
-  // We draw each segment individually so we can use each arm's own color.
   for (let i = 0; i < arms.length; i++) {
     const arm = arms[i];
     if (!arm.displayArm) continue;
@@ -203,36 +229,31 @@ function drawArms(
   }
 }
 
-/**
- * Draw the trajectory of the end effector using the last arm's lineColor.
- * This accumulates over time because we no longer clear the whole canvas every frame.
- */
-function drawTrajectory(
+// Draw trail for each arm, using the points stored in trailMap.
+function drawAllTrails(
   ctx: CanvasRenderingContext2D,
   arms: Arm[],
-  time: number,
-  lineWidth: number,
-  lastPointRef: React.MutableRefObject<{ x: number; y: number } | null>
+  trailMap: TrailMap,
+  lineWidth: number
 ) {
-  if (arms.length === 0) return;
+  arms.forEach((arm) => {
+    if (!arm.draw) return;
 
-  const lastArm = arms[arms.length - 1];
-  const { x, y } = getEndpoint(arms, time);
+    const points = trailMap[arm.id];
+    if (!points || points.length < 2) return;
 
-  const lastPoint = lastPointRef.current;
-
-  // If draw is false, we do not draw the trajectory, but we still update lastPointRef.
-  if (lastArm.draw && lastPoint) {
-    ctx.beginPath();
-    ctx.moveTo(lastPoint.x, lastPoint.y);
-    ctx.lineTo(x, y);
-
-    const c = lastArm.lineColor;
+    const c = arm.lineColor;
     ctx.strokeStyle = `rgb(${c.r}, ${c.g}, ${c.b})`;
     ctx.lineWidth = lineWidth;
-    ctx.stroke();
-  }
 
-  // Update the last point for the next frame.
-  lastPointRef.current = { x, y };
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+
+    for (let i = 1; i < points.length; i++) {
+      const p = points[i];
+      ctx.lineTo(p.x, p.y);
+    }
+
+    ctx.stroke();
+  });
 }
