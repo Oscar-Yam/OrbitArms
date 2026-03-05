@@ -71,8 +71,8 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
       // Reset trajectory state.
       lastPointRef.current = null;
 
-      // If you also want to reset time when cleaning the canvas, uncomment:
-      // setTime(0);
+      // Reset the animation time to 0 seconds.
+      setTime(0);
 
       // Reset the flag.
       setClearRequested(false);
@@ -121,7 +121,7 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
     setRunning((prev) => !prev);
   };
 
-  /** Clear the canvas and trajectory. */
+  /** Clear the canvas, trajectory, and reset time. */
   const handleClearCanvas = () => {
     setClearRequested(true);
   };
