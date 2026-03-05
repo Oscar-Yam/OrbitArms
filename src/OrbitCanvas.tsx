@@ -1,3 +1,4 @@
+// OrbitCanvas.tsx
 import React, { useEffect, useRef, useState } from "react";
 import type { Arm } from "./arm";
 import { getEndpoint, getArmSegments } from "./armMath";
@@ -5,9 +6,6 @@ import { getEndpoint, getArmSegments } from "./armMath";
 interface OrbitCanvasProps {
   /** List of arms, from base to tip. */
   arms: Arm[];
-
-  /** Whether the animation is running. Defaults to true. */
-  running?: boolean;
 
   /** Background color for the canvas. */
   backgroundColor?: string;
@@ -18,7 +16,6 @@ interface OrbitCanvasProps {
 
 const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
   arms,
-  running = true,
   backgroundColor = "black",
   lineWidth = 1,
 }) => {
@@ -26,6 +23,12 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
 
   // We track time in seconds.
   const [time, setTime] = useState(0);
+
+  // Whether the animation is running (play / pause).
+  const [running, setRunning] = useState(true);
+
+  // This flag is used to trigger a full clear of the canvas.
+  const [clearRequested, setClearRequested] = useState(false);
 
   // Store the last end-point to draw the trajectory line.
   const lastPointRef = useRef<{ x: number; y: number } | null>(null);
@@ -48,7 +51,7 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
     return () => cancelAnimationFrame(animationFrameId);
   }, [running]);
 
-  // Handle drawing on the canvas whenever time or arms change.
+  // Handle drawing on the canvas whenever time, arms, or clearRequested change.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -59,7 +62,24 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
     const width = canvas.width;
     const height = canvas.height;
 
-    // Clear the canvas.
+    // If clearRequested is true, we reset the whole drawing state.
+    if (clearRequested) {
+      // Clear the canvas.
+      ctx.fillStyle = backgroundColor;
+      ctx.fillRect(0, 0, width, height);
+
+      // Reset trajectory state.
+      lastPointRef.current = null;
+
+      // If you also want to reset time when cleaning the canvas, uncomment:
+      // setTime(0);
+
+      // Reset the flag.
+      setClearRequested(false);
+      return;
+    }
+
+    // Clear the canvas for the current frame.
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, width, height);
 
@@ -74,7 +94,7 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
     drawTrajectory(ctx, arms, time, lineWidth, lastPointRef);
 
     ctx.restore();
-  }, [time, arms, backgroundColor, lineWidth]);
+  }, [time, arms, backgroundColor, lineWidth, clearRequested]);
 
   // Keep canvas width in sync with its parent width (simple responsive behavior).
   useEffect(() => {
@@ -96,15 +116,45 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
     return () => window.removeEventListener("resize", resize);
   }, []);
 
+  /** Toggle between play and pause states. */
+  const handleTogglePlay = () => {
+    setRunning((prev) => !prev);
+  };
+
+  /** Clear the canvas and trajectory. */
+  const handleClearCanvas = () => {
+    setClearRequested(true);
+  };
+
   return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        width: "100%",
-        height: "400px",
-        display: "block",
-      }}
-    />
+    <div style={{ width: "100%" }}>
+      {/* Controls */}
+      <div
+        style={{
+          display: "flex",
+          gap: "8px",
+          marginBottom: "8px",
+          justifyContent: "flex-start",
+        }}
+      >
+        <button onClick={handleTogglePlay}>
+          {running ? "Pause" : "Play"}
+        </button>
+
+        <button onClick={handleClearCanvas}>Clean Canvas</button>
+      </div>
+
+      {/* Canvas */}
+      <canvas
+        ref={canvasRef}
+        style={{
+          width: "100%",
+          height: "400px",
+          display: "block",
+          border: "1px solid #333",
+        }}
+      />
+    </div>
   );
 };
 
@@ -158,9 +208,9 @@ function drawTrajectory(
   const lastArm = arms[arms.length - 1];
   const { x, y } = getEndpoint(arms, time);
 
-  // If draw is false, we do not draw the trajectory, but we still update lastPointRef.
   const lastPoint = lastPointRef.current;
 
+  // If draw is false, we do not draw the trajectory, but we still update lastPointRef.
   if (lastArm.draw && lastPoint) {
     ctx.beginPath();
     ctx.moveTo(lastPoint.x, lastPoint.y);
