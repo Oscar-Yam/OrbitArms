@@ -1,35 +1,98 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+// App.tsx
+import React, { useState } from "react";
+import OrbitCanvas from "./OrbitCanvas";
+import { Arm, createDefaultArm } from "./arm";
 
-function App() {
-  const [count, setCount] = useState(0)
+const App: React.FC = () => {
+  const [arms, setArms] = useState<Arm[]>(() => [
+    createDefaultArm({
+      length: 120,
+      angularVelocity: Math.PI / 2,
+      initialAngle: 0,
+      displayArm: true,
+      draw: true,
+      lineColor: { r: 0, g: 255, b: 255 },
+      armColor: { r: 255, g: 255, b: 255 },
+    }),
+    createDefaultArm({
+      length: 80,
+      angularVelocity: -Math.PI,
+      initialAngle: Math.PI / 4,
+      displayArm: true,
+      draw: true,
+      lineColor: { r: 255, g: 128, b: 0 },
+      armColor: { r: 255, g: 255, b: 0 },
+    }),
+  ]);
+
+  const handleAddArm = () => {
+    setArms((prev) => [
+      ...prev,
+      createDefaultArm({
+        // You can tweak these defaults for newly added arms.
+        length: 80,
+        angularVelocity: Math.PI / 3,
+        initialAngle: 0,
+        displayArm: true,
+        draw: true,
+        lineColor: randomColor(),
+        armColor: { r: 255, g: 255, b: 255 },
+      }),
+    ]);
+  };
+
+  const handleRemoveLastArm = () => {
+    setArms((prev) => (prev.length > 0 ? prev.slice(0, -1) : prev));
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <div
+      style={{
+        maxWidth: "900px",
+        margin: "0 auto",
+        padding: "16px",
+        color: "#eee",
+        backgroundColor: "#111",
+        minHeight: "100vh",
+        boxSizing: "border-box",
+      }}
+    >
+      <h1 style={{ marginBottom: "8px" }}>Orbit Arms Demo</h1>
 
-export default App
+      {/* Global controls for arms */}
+      <div
+        style={{
+          display: "flex",
+          gap: "8px",
+          marginBottom: "16px",
+          flexWrap: "wrap",
+        }}
+      >
+        <button onClick={handleAddArm}>Add Arm</button>
+        <button onClick={handleRemoveLastArm} disabled={arms.length === 0}>
+          Remove Last Arm
+        </button>
+      </div>
+
+      {/* Canvas with animation */}
+      <OrbitCanvas arms={arms} />
+
+      {/* Simple debug info */}
+      <div style={{ marginTop: "12px", fontSize: "12px", opacity: 0.7 }}>
+        <div>Number of arms: {arms.length}</div>
+      </div>
+    </div>
+  );
+};
+
+export default App;
+
+/**
+ * Generate a random bright-ish RGB color.
+ */
+function randomColor(): { r: number; g: number; b: number } {
+  const r = 128 + Math.floor(Math.random() * 128);
+  const g = 128 + Math.floor(Math.random() * 128);
+  const b = 128 + Math.floor(Math.random() * 128);
+  return { r, g, b };
+}
