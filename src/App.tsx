@@ -71,6 +71,7 @@ const App: React.FC = () => {
     <div
       style={{
         maxWidth: "1200px",
+        height: "auto",
         margin: "0 auto",
         padding: "16px",
         
@@ -191,7 +192,7 @@ const App: React.FC = () => {
                 #{index + 1}
               </div>
 
-              {/* Length：UI 用單位，內部用 px */}
+              {/* Length：UI Display, px for internal use */}
               <label style={{ fontSize: "12px" }}>
                 Length
                 <input
