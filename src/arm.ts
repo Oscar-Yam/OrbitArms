@@ -1,3 +1,5 @@
+// Defines the Arm interface and a helper function to create new arms with defaults.
+let armIdCounter = 0;
 export interface RGBColor {
   /** Red channel, 0–255. */
   r: number;
@@ -9,6 +11,7 @@ export interface RGBColor {
 
 export interface Arm
 {
+  id: string;
   // Lenght of arm in px
   length: number;
 
@@ -34,6 +37,7 @@ export interface Arm
 // Helper to create a new Arm with some reasonable defaults.
 export function createDefaultArm(partial?: Partial<Arm>): Arm {
   const base: Arm = {
+    id: `arm-${armIdCounter++}`,      // auto assign id
     length: 120,
     angularVelocity: Math.PI / 2,
     initialAngle: 0,
