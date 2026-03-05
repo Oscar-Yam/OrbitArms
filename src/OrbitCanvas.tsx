@@ -80,8 +80,8 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
     }
 
     // Clear the canvas for the current frame.
-    ctx.fillStyle = backgroundColor;
-    ctx.fillRect(0, 0, width, height);
+    //ctx.fillStyle = backgroundColor;
+    //ctx.fillRect(0, 0, width, height);
 
     // Move the origin to the center of the canvas.
     ctx.save();
@@ -109,12 +109,22 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
       // You can adjust the height logic as needed.
       canvas.width = rect.width;
       canvas.height = 400;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      // Every time we resize, we also clear the canvas and reset trajectory.
+      ctx.fillStyle = backgroundColor;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      lastPointRef.current = null;
+      setTime(0);
     };
 
     resize();
     window.addEventListener("resize", resize);
     return () => window.removeEventListener("resize", resize);
-  }, []);
+  }, [backgroundColor]);
 
   /** Toggle between play and pause states. */
   const handleTogglePlay = () => {
@@ -195,6 +205,7 @@ function drawArms(
 
 /**
  * Draw the trajectory of the end effector using the last arm's lineColor.
+ * This accumulates over time because we no longer clear the whole canvas every frame.
  */
 function drawTrajectory(
   ctx: CanvasRenderingContext2D,
