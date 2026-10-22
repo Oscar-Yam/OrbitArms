@@ -141,7 +141,7 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
 
       const rect = parent.getBoundingClientRect();
       canvas.width = rect.width;
-      canvas.height = 400;
+      canvas.height = rect.height*0.85;
 
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
@@ -188,7 +188,7 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
         ref={canvasRef}
         style={{
           width: "100%",
-          height: "400px",
+          height: "100%",
           display: "block",
           border: "1px solid #333",
         }}
