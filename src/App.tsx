@@ -85,7 +85,6 @@ const App: React.FC = () => {
         style={{
           // center app card
           margin: "0 auto",
-          maxWidth: "1200px",
           backgroundColor: backgroundColor === "black" ? "#111" : "#eee",
           color: backgroundColor === "black" ? "#eee" : "#111",
           borderRadius: "4px",
