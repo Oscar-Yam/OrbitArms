@@ -169,8 +169,7 @@ const App: React.FC = () => {
           <section
             style={{
               flex: "0 0 auto",
-              width: panelCollapsed ? 140 : 340,
-              maxWidth: panelCollapsed ? 160 : 360,
+              width: panelCollapsed ? 160 : 340,
               border: "1px solid rgba(255,255,255,0.2)",
               borderRadius: "4px",
               background:
