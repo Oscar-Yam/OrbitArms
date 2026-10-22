@@ -126,7 +126,7 @@ const App: React.FC = () => {
           >
             {/* line width */}
             <label style={{ fontSize: "12px" }}>
-              Line Width{" "}
+              Arm Width{" "}
               <input
                 type="number"
                 value={lineWidth}
