@@ -169,7 +169,7 @@ const App: React.FC = () => {
           <section
             style={{
               flex: "0 0 auto",
-              width: panelCollapsed ? 160 : 340,
+              width: panelCollapsed ? 160 : 400,
               border: "1px solid rgba(255,255,255,0.2)",
               borderRadius: "4px",
               background:
@@ -269,7 +269,7 @@ const App: React.FC = () => {
                             clampedUnit * LENGTH_UNIT_PX
                           );
                         }}
-                        style={{ width: "70px", marginLeft: "4px" }}
+                        style={{ width: "35px", marginLeft: "4px" }}
                       />
                     </label>
 
@@ -286,7 +286,7 @@ const App: React.FC = () => {
                           const v = Number(e.target.value) || 0;
                           updateArm(index, "angularVelocity", degToRad(v));
                         }}
-                        style={{ width: "70px", marginLeft: "4px" }}
+                        style={{ width: "55px", marginLeft: "4px" }}
                       />
                     </label>
 
@@ -301,7 +301,7 @@ const App: React.FC = () => {
                           const v = Number(e.target.value) || 0;
                           updateArm(index, "initialAngle", degToRad(v));
                         }}
-                        style={{ width: "70px", marginLeft: "4px" }}
+                        style={{ width: "50px", marginLeft: "4px" }}
                       />
                     </label>
 
