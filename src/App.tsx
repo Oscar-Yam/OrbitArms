@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import OrbitCanvas from "./OrbitCanvas";
 import { Arm, createDefaultArm } from "./arm";
 
-const LENGTH_UNIT_PX = 20; // 1 單位 = 20px
+const LENGTH_UNIT_PX = 20; // 1 unit = 20px
 
 const App: React.FC = () => {
   const [arms, setArms] = useState<Arm[]>(() => [
@@ -32,6 +32,9 @@ const App: React.FC = () => {
   const [backgroundColor, setBackgroundColor] = useState<"black" | "white">(
     "black"
   );
+
+  // left Arms Settings Panel collapsed state
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
 
   const handleAddArm = () => {
     setArms((prev) => [
@@ -70,250 +73,320 @@ const App: React.FC = () => {
   return (
     <div
       style={{
-        maxWidth: "1200px",
-        height: "auto",
-        margin: "0 auto",
-        padding: "16px",
-        
-        color: backgroundColor === "black" ? "#eee" : "#111",
-        backgroundColor: backgroundColor === "black" ? "#111" : "#eee",
+        // viewport background
         minHeight: "100vh",
         boxSizing: "border-box",
+        padding: "16px",
+        backgroundColor: "#222",
+        color: "#f0f0f0",
       }}
     >
-      <h1 style={{ marginBottom: "8px" }}>Orbit Arms Demo</h1>
-
-      {/* Global controls */}
-      <section
+      <div
         style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "12px",
-          marginBottom: "16px",
-          alignItems: "center",
+          // center app card
+          margin: "0 auto",
+          maxWidth: "1200px",
+          backgroundColor: backgroundColor === "black" ? "#111" : "#eee",
+          color: backgroundColor === "black" ? "#eee" : "#111",
+          borderRadius: "4px",
+          padding: "16px",
+          boxSizing: "border-box",
+          overflowX: "auto", // Scrollbar for narrow screens
         }}
       >
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <button onClick={handleAddArm}>Add Arm</button>
-          <button onClick={handleRemoveLastArm} disabled={arms.length <= 1}>
-            Remove Last Arm
-          </button>
-          <span style={{ fontSize: "12px", opacity: 0.8 }}>
-            Arms: {arms.length}
-          </span>
-        </div>
+        {/* Header + Global controls */}
+        <h1 style={{ marginBottom: "8px" }}>Orbit Arms Demo</h1>
 
+        <section
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "12px",
+            marginBottom: "16px",
+            alignItems: "center",
+          }}
+        >
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <button onClick={handleAddArm}>Add Arm</button>
+            <button onClick={handleRemoveLastArm} disabled={arms.length <= 1}>
+              Remove Last Arm
+            </button>
+            <span style={{ fontSize: "12px", opacity: 0.8 }}>
+              Arms: {arms.length}
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            {/* line width */}
+            <label style={{ fontSize: "12px" }}>
+              Line Width{" "}
+              <input
+                type="number"
+                value={lineWidth}
+                min={0.5}
+                max={5}
+                step={0.5}
+                onChange={(e) => setLineWidth(Number(e.target.value) || 1)}
+                style={{ width: "60px", marginLeft: "4px" }}
+              />
+            </label>
+
+            {/* background */}
+            <label style={{ fontSize: "12px", display: "flex", gap: "4px" }}>
+              Background:
+              <select
+                value={backgroundColor}
+                onChange={(e) =>
+                  setBackgroundColor(e.target.value as "black" | "white")
+                }
+              >
+                <option value="black">Black</option>
+                <option value="white">White</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        {/* main layout：left side Arms Panel，right side Canvas
+            no stack*/}
         <div
           style={{
             display: "flex",
-            gap: "8px",
-            alignItems: "center",
-            flexWrap: "wrap",
+            flexDirection: "row",
+            flexWrap: "nowrap", // no warp, force horizontal scroll if too narrow
+            gap: "16px",
+            alignItems: "stretch",
+            minWidth: panelCollapsed ? 640 : 800, // scrollbar when narrow screen
           }}
         >
-          {/* line width */}
-          <label style={{ fontSize: "12px" }}>
-            Line Width{" "}
-            <input
-              type="number"
-              value={lineWidth}
-              min={0.5}
-              max={5}
-              step={0.5}
-              onChange={(e) => setLineWidth(Number(e.target.value) || 1)}
-              style={{ width: "60px", marginLeft: "4px" }}
-            />
-          </label>
-
-          {/* background */}
-          <label style={{ fontSize: "12px", display: "flex", gap: "4px" }}>
-            Background:
-            <select
-              value={backgroundColor}
-              onChange={(e) =>
-                setBackgroundColor(e.target.value as "black" | "white")
-              }
-            >
-              <option value="black">Black</option>
-              <option value="white">White</option>
-            </select>
-          </label>
-        </div>
-      </section>
-
-      {/* Arms control panel */}
-      <section
-        style={{
-          border: "1px solid rgba(255,255,255,0.2)",
-          borderRadius: "4px",
-          padding: "8px",
-          marginBottom: "16px",
-          background:
-            backgroundColor === "black"
-              ? "rgba(0,0,0,0.5)"
-              : "rgba(255,255,255,0.6)",
-        }}
-      >
-        <h2
-          style={{
-            fontSize: "14px",
-            margin: "0 0 8px 0",
-            borderBottom: "1px solid rgba(255,255,255,0.2)",
-            paddingBottom: "4px",
-          }}
-        >
-          Arms Settings
-        </h2>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          {arms.map((arm, index) => (
+          {/* Panel：collapsible*/}
+          <section
+            style={{
+              flex: "0 0 auto",
+              width: panelCollapsed ? 140 : 340,
+              maxWidth: panelCollapsed ? 160 : 360,
+              border: "1px solid rgba(255,255,255,0.2)",
+              borderRadius: "4px",
+              background:
+                backgroundColor === "black"
+                  ? "rgba(0,0,0,0.5)"
+                  : "rgba(255,255,255,0.6)",
+              padding: "8px",
+              boxSizing: "border-box",
+            }}
+          >
+            {/* Panel header + collapse button */}
             <div
-              key={arm.id}
               style={{
                 display: "flex",
-                flexWrap: "wrap",
-                gap: "8px",
-                padding: "6px 4px",
-                borderRadius: "4px",
-                background:
-                  backgroundColor === "black"
-                    ? "rgba(255,255,255,0.03)"
-                    : "rgba(0,0,0,0.04)",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: panelCollapsed ? 0 : 8,
               }}
             >
+              <h2
+                style={{
+                  fontSize: "14px",
+                  margin: 0,
+                  paddingBottom: panelCollapsed ? 0 : 4,
+                  borderBottom: panelCollapsed
+                    ? "none"
+                    : "1px solid rgba(255,255,255,0.2)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Arms Settings
+              </h2>
+              <button
+                onClick={() => setPanelCollapsed((v) => !v)}
+                style={{
+                  fontSize: "11px",
+                  padding: "2px 6px",
+                  marginLeft: "8px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {panelCollapsed ? "Expand" : "Collapse"}
+              </button>
+            </div>
+
+            {/* no detail after collapsed only headline and button */}
+            {!panelCollapsed && (
               <div
                 style={{
-                  minWidth: "40px",
-                  fontWeight: 600,
-                  fontSize: "12px",
-                  marginRight: "4px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                  marginTop: "4px",
                 }}
               >
-                #{index + 1}
+                {arms.map((arm, index) => (
+                  <div
+                    key={arm.id}
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "8px",
+                      padding: "6px 4px",
+                      borderRadius: "4px",
+                      background:
+                        backgroundColor === "black"
+                          ? "rgba(255,255,255,0.03)"
+                          : "rgba(0,0,0,0.04)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        minWidth: "40px",
+                        fontWeight: 600,
+                        fontSize: "12px",
+                        marginRight: "4px",
+                      }}
+                    >
+                      #{index + 1}
+                    </div>
+
+                    {/* Length：Unit for UI，code behide is px */}
+                    <label style={{ fontSize: "12px" }}>
+                      Length
+                      <input
+                        type="number"
+                        min={1}
+                        max={50}
+                        step={1}
+                        value={arm.length / LENGTH_UNIT_PX}
+                        onChange={(e) => {
+                          const unit = Number(e.target.value) || 0;
+                          const clampedUnit = Math.max(1, Math.min(50, unit));
+                          updateArm(
+                            index,
+                            "length",
+                            clampedUnit * LENGTH_UNIT_PX
+                          );
+                        }}
+                        style={{ width: "70px", marginLeft: "4px" }}
+                      />
+                    </label>
+
+                    {/* Angular Velocity (deg/sec) */}
+                    <label style={{ fontSize: "12px" }}>
+                      ω (deg/s)
+                      <input
+                        type="number"
+                        value={((arm.angularVelocity * 180) / Math.PI).toFixed(
+                          1
+                        )}
+                        step={5}
+                        onChange={(e) => {
+                          const v = Number(e.target.value) || 0;
+                          updateArm(index, "angularVelocity", degToRad(v));
+                        }}
+                        style={{ width: "70px", marginLeft: "4px" }}
+                      />
+                    </label>
+
+                    {/* Initial Angle (deg) */}
+                    <label style={{ fontSize: "12px" }}>
+                      θ₀ (deg)
+                      <input
+                        type="number"
+                        value={radToDeg(arm.initialAngle).toFixed(1)}
+                        step={5}
+                        onChange={(e) => {
+                          const v = Number(e.target.value) || 0;
+                          updateArm(index, "initialAngle", degToRad(v));
+                        }}
+                        style={{ width: "70px", marginLeft: "4px" }}
+                      />
+                    </label>
+
+                    {/* displayArm toggle */}
+                    <label
+                      style={{
+                        fontSize: "12px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={arm.displayArm}
+                        onChange={(e) =>
+                          updateArm(index, "displayArm", e.target.checked)
+                        }
+                      />
+                      show arm
+                    </label>
+
+                    {/* draw toggle */}
+                    <label
+                      style={{
+                        fontSize: "12px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={arm.draw}
+                        onChange={(e) =>
+                          updateArm(index, "draw", e.target.checked)
+                        }
+                      />
+                      draw trail
+                    </label>
+
+                    {/* line color */}
+                    <label
+                      style={{
+                        fontSize: "12px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      Color
+                      <input
+                        type="color"
+                        value={rgbToHex(arm.lineColor)}
+                        onChange={(e) => {
+                          const rgb = hexToRgb(e.target.value);
+                          if (!rgb) return;
+                          updateArm(index, "lineColor", rgb);
+                        }}
+                        style={{ width: "32px", height: "18px", padding: 0 }}
+                      />
+                    </label>
+                  </div>
+                ))}
               </div>
+            )}
+          </section>
 
-              {/* Length：UI Display, px for internal use */}
-              <label style={{ fontSize: "12px" }}>
-                Length
-                <input
-                  type="number"
-                  min={1}
-                  max={50}
-                  step={1}
-                  value={arm.length / LENGTH_UNIT_PX}
-                  onChange={(e) => {
-                    const unit = Number(e.target.value) || 0;
-                    const clampedUnit = Math.max(1, Math.min(50, unit));
-                    updateArm(
-                      index,
-                      "length",
-                      clampedUnit * LENGTH_UNIT_PX
-                    );
-                  }}
-                  style={{ width: "70px", marginLeft: "4px" }}
-                />
-              </label>
-
-              {/* Angular Velocity (deg/sec) */}
-              <label style={{ fontSize: "12px" }}>
-                ω (deg/s)
-                <input
-                  type="number"
-                  value={((arm.angularVelocity * 180) / Math.PI).toFixed(1)}
-                  step={5}
-                  onChange={(e) => {
-                    const v = Number(e.target.value) || 0;
-                    updateArm(index, "angularVelocity", degToRad(v));
-                  }}
-                  style={{ width: "70px", marginLeft: "4px" }}
-                />
-              </label>
-
-              {/* Initial Angle (deg) */}
-              <label style={{ fontSize: "12px" }}>
-                θ₀ (deg)
-                <input
-                  type="number"
-                  value={radToDeg(arm.initialAngle).toFixed(1)}
-                  step={5}
-                  onChange={(e) => {
-                    const v = Number(e.target.value) || 0;
-                    updateArm(index, "initialAngle", degToRad(v));
-                  }}
-                  style={{ width: "70px", marginLeft: "4px" }}
-                />
-              </label>
-
-              {/* displayArm toggle */}
-              <label
-                style={{
-                  fontSize: "12px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={arm.displayArm}
-                  onChange={(e) =>
-                    updateArm(index, "displayArm", e.target.checked)
-                  }
-                />
-                show arm
-              </label>
-
-              {/* draw toggle */}
-              <label
-                style={{
-                  fontSize: "12px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={arm.draw}
-                  onChange={(e) =>
-                    updateArm(index, "draw", e.target.checked)
-                  }
-                />
-                draw trail
-              </label>
-
-              {/* line color */}
-              <label
-                style={{
-                  fontSize: "12px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-              >
-                Color
-                <input
-                  type="color"
-                  value={rgbToHex(arm.lineColor)}
-                  onChange={(e) => {
-                    const rgb = hexToRgb(e.target.value);
-                    if (!rgb) return;
-                    updateArm(index, "lineColor", rgb);
-                  }}
-                  style={{ width: "32px", height: "18px", padding: 0 }}
-                />
-              </label>
-            </div>
-          ))}
+          {/* Right：Canvas （auto max width） */}
+          <section
+            style={{
+              flex: "1 1 auto",
+              minWidth: 360,
+            }}
+          >
+            <OrbitCanvas
+              arms={arms}
+              backgroundColor={backgroundColor}
+              lineWidth={lineWidth}
+            />
+          </section>
         </div>
-      </section>
-
-      {/* Canvas with animation */}
-      <OrbitCanvas
-        arms={arms}
-        backgroundColor={backgroundColor}
-        lineWidth={lineWidth}
-      />
+      </div>
     </div>
   );
 };
