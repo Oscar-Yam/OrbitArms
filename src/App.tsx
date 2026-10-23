@@ -94,7 +94,7 @@ const App: React.FC = () => {
         }}
       >
         {/* Header + Global controls */}
-        <h1 style={{ marginBottom: "8px" }}>Orbit Arms Demo</h1>
+        <h1 style={{ marginBottom: "8px" }}>Orbit Arms</h1>
 
         <section
           style={{
