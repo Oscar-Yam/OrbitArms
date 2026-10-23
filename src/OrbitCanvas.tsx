@@ -118,12 +118,35 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
     ctx.fillRect(0, 0, width, height);
 
     ctx.save();
+
+    //  calculate total length
+    const totalLength = arms.reduce((sum, arm) => sum + arm.length, 0);
+
+    // using 4+6 unit (200px) as baseline
+    const BASE_TOTAL_LENGTH = 200; // 4 + 6 單位 = (4+6)*20 = 200px
+    
     ctx.translate(width / 2, height / 2);
 
-    // 1) Draw all trails for each arm, using the points stored in trailMap.
+    if (totalLength > 0) {
+      const marginRatio = 0.9; // reserve 10% space
+      const halfSize = Math.min(width, height) / 2 * marginRatio;
+
+      // scaling
+      // - baseline total length = 200px apply max scale
+      // - if total length > baseline, auto scale
+      const maxScale = halfSize / BASE_TOTAL_LENGTH;
+      const autoScale = halfSize / totalLength; // max reach = totalLength
+
+      // never zoom in beyond baseline： maxScale
+      const finalScale = Math.min(maxScale, autoScale);
+    
+      ctx.scale(finalScale, finalScale);
+    }
+
+    // Draw all trails for each arm, using the points stored in trailMap.
     drawAllTrails(ctx, arms, trailMap, lineWidth);
 
-    // 2) Draw current arms based on the current time, on top of the trails.
+    // Draw current arms based on the current time, on top of the trails.
     drawArms(ctx, arms, time, lineWidth);
 
     ctx.restore();
