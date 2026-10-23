@@ -1,7 +1,7 @@
 // App.tsx
 import React, { useState } from "react";
 import OrbitCanvas from "./OrbitCanvas";
-import { Arm, createDefaultArm } from "./arm";
+import { type Arm, createDefaultArm } from "./arm";
 
 const LENGTH_UNIT_PX = 20; // 1 unit = 20px
 
