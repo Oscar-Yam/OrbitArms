@@ -105,15 +105,6 @@ const App: React.FC = () => {
             alignItems: "center",
           }}
         >
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <button onClick={handleAddArm}>Add Arm</button>
-            <button onClick={handleRemoveLastArm} disabled={arms.length <= 1}>
-              Remove Last Arm
-            </button>
-            <span style={{ fontSize: "12px", opacity: 0.8 }}>
-              Arms: {arms.length}
-            </span>
-          </div>
 
           <div
             style={{
@@ -123,19 +114,7 @@ const App: React.FC = () => {
               flexWrap: "wrap",
             }}
           >
-            {/* line width */}
-            <label style={{ fontSize: "12px" }}>
-              Arm Width{" "}
-              <input
-                type="number"
-                value={lineWidth}
-                min={0.5}
-                max={5}
-                step={0.5}
-                onChange={(e) => setLineWidth(Number(e.target.value) || 1)}
-                style={{ width: "60px", marginLeft: "4px" }}
-              />
-            </label>
+            
 
             {/* background */}
             <label style={{ fontSize: "12px", display: "flex", gap: "4px" }}>
@@ -169,7 +148,7 @@ const App: React.FC = () => {
           <section
             style={{
               flex: "0 0 auto",
-              width: panelCollapsed ? 160 : 400,
+              width: panelCollapsed ? 165 : 400,
               border: "1px solid rgba(255,255,255,0.2)",
               borderRadius: "4px",
               background:
@@ -183,191 +162,233 @@ const App: React.FC = () => {
             {/* Panel header + collapse button */}
             <div
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: panelCollapsed ? 0 : 8,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 8,
               }}
             >
               <h2
-                style={{
-                  fontSize: "14px",
-                  margin: 0,
-                  paddingBottom: panelCollapsed ? 0 : 4,
-                  borderBottom: panelCollapsed
-                    ? "none"
-                    : "1px solid rgba(255,255,255,0.2)",
-                  whiteSpace: "nowrap",
-                }}
+              style={{
+                fontSize: "14px",
+                margin: 0,
+                paddingBottom: 4,
+                borderBottom: "1px solid rgba(255,255,255,0.2)",
+                whiteSpace: "nowrap",
+              }}
               >
-                Arms Settings
+              Arms Settings
               </h2>
               <button
-                onClick={() => setPanelCollapsed((v) => !v)}
-                style={{
-                  fontSize: "11px",
-                  padding: "2px 6px",
-                  marginLeft: "8px",
-                  whiteSpace: "nowrap",
-                }}
+              onClick={() => setPanelCollapsed((v) => !v)}
+              style={{
+                fontSize: "11px",
+                padding: "2px 6px",
+                marginLeft: "8px",
+                whiteSpace: "nowrap",
+              }}
               >
-                {panelCollapsed ? "Expand" : "Collapse"}
+              {panelCollapsed ? "Expand" : "Collapse"}
               </button>
             </div>
 
-            {/* no detail after collapsed only headline and button */}
-            {!panelCollapsed && (
+            {/* small button after collapsed only and show all details when expanded*/}
+            {panelCollapsed?
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                whiteSpace: "nowrap",
+              }}
+              >
+                <button
+                onClick={handleAddArm}
+                style={{
+                  fontSize: "11px",
+                  padding: "2px 6px",
+                }}
+                >
+                  + Arm
+                </button>
+                <button
+                onClick={handleRemoveLastArm}
+                disabled={arms.length <= 1}
+                style={{
+                  fontSize: "11px",
+                  padding: "2px 6px",
+                  opacity: arms.length <= 1 ? 0.5 : 1,
+                }}
+                >
+                  - Last
+                </button>
+            </div> : 
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+                marginTop: "4px",
+              }}
+            >
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                <button onClick={handleAddArm} style={{fontSize: "11px"}}>Add Arm</button>
+                <button onClick={handleRemoveLastArm} style={{fontSize: "11px"}} disabled={arms.length <= 1}>Remove Last Arm</button>
+                <span style={{ fontSize: "12px", opacity: 0.8 }}>Arms: {arms.length}</span>
+              </div>
               <div
                 style={{
                   display: "flex",
-                  flexDirection: "column",
                   gap: "8px",
-                  marginTop: "4px",
+                  alignItems: "center",
+                  flexWrap: "wrap",
                 }}
               >
-                {arms.map((arm, index) => (
+                {/* line width */}
+                <label style={{ fontSize: "12px" }}>Arm Width{" "}
+                  <input
+                  type="number"
+                  value={lineWidth}
+                  min={0.5}
+                  max={5}
+                  step={0.5}
+                  onChange={(e) => setLineWidth(Number(e.target.value) || 1)}
+                  style={{ width: "30px"}}
+                  />
+                </label>
+              </div>
+              {arms.map((arm, index) => (
+                <div
+                  key={arm.id}
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "8px",
+                    padding: "6px 4px",
+                    borderRadius: "4px",
+                    background: backgroundColor === "black" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.04)",
+                  }}
+                >
                   <div
-                    key={arm.id}
+                  style={{
+                    minWidth: "26px",
+                    fontWeight: 600,
+                    fontSize: "12px",
+                    marginRight: "4px",
+                  }}
+                  >
+                    #{index + 1}
+                  </div>
+                  
+                  {/* Length：Unit for UI，code behide is px */}
+                  <label style={{ fontSize: "12px" }}>
+                    Length
+                    <input
+                    type="number"
+                    min={1}
+                    max={50}
+                    step={1}
+                    value={arm.length / LENGTH_UNIT_PX}
+                    onChange={(e) =>
+                      {
+                        const unit = Number(e.target.value) || 0;
+                        const clampedUnit = Math.max(1, Math.min(50, unit));
+                        updateArm( index, "length", clampedUnit * LENGTH_UNIT_PX);
+                      }}
+                    style={{ width: "31px", marginLeft: "4px" }}
+                    />
+                  </label>
+                  
+                  {/* Angular Velocity (deg/sec) */}
+                  <label style={{ fontSize: "12px" }}>
+                    ω (deg/s)
+                    <input
+                    type="number"
+                    value={((arm.angularVelocity * 180) / Math.PI).toFixed(1)}
+                    step={5}
+                    onChange={(e) =>
+                      {
+                        const v = Number(e.target.value) || 0;
+                        updateArm(index, "angularVelocity", degToRad(v));
+                      }}
+                    style={{ width: "51px", marginLeft: "4px" }}
+                    />
+                  </label>
+                  
+                  {/* Initial Angle (deg) */}
+                  <label style={{ fontSize: "12px" }}>
+                    θ₀ (deg)
+                    <input
+                    type="number"
+                    value={radToDeg(arm.initialAngle).toFixed(1)}
+                    step={5}
+                    onChange={(e) =>
+                      {
+                        const v = Number(e.target.value) || 0;
+                        updateArm(index, "initialAngle", degToRad(v));
+                      }}
+                    style={{ width: "50px", marginLeft: "4px" }}
+                    />
+                  </label>
+                  
+                  {/* displayArm toggle */}
+                  <label
                     style={{
+                      fontSize: "12px",
                       display: "flex",
-                      flexWrap: "wrap",
-                      gap: "8px",
-                      padding: "6px 4px",
-                      borderRadius: "4px",
-                      background:
-                        backgroundColor === "black"
-                          ? "rgba(255,255,255,0.03)"
-                          : "rgba(0,0,0,0.04)",
+                      alignItems: "center",
                     }}
                   >
-                    <div
-                      style={{
-                        minWidth: "40px",
-                        fontWeight: 600,
-                        fontSize: "12px",
-                        marginRight: "4px",
-                      }}
-                    >
-                      #{index + 1}
-                    </div>
-
-                    {/* Length：Unit for UI，code behide is px */}
-                    <label style={{ fontSize: "12px" }}>
-                      Length
-                      <input
-                        type="number"
-                        min={1}
-                        max={50}
-                        step={1}
-                        value={arm.length / LENGTH_UNIT_PX}
-                        onChange={(e) => {
-                          const unit = Number(e.target.value) || 0;
-                          const clampedUnit = Math.max(1, Math.min(50, unit));
-                          updateArm(
-                            index,
-                            "length",
-                            clampedUnit * LENGTH_UNIT_PX
-                          );
-                        }}
-                        style={{ width: "35px", marginLeft: "4px" }}
-                      />
-                    </label>
-
-                    {/* Angular Velocity (deg/sec) */}
-                    <label style={{ fontSize: "12px" }}>
-                      ω (deg/s)
-                      <input
-                        type="number"
-                        value={((arm.angularVelocity * 180) / Math.PI).toFixed(
-                          1
-                        )}
-                        step={5}
-                        onChange={(e) => {
-                          const v = Number(e.target.value) || 0;
-                          updateArm(index, "angularVelocity", degToRad(v));
-                        }}
-                        style={{ width: "55px", marginLeft: "4px" }}
-                      />
-                    </label>
-
-                    {/* Initial Angle (deg) */}
-                    <label style={{ fontSize: "12px" }}>
-                      θ₀ (deg)
-                      <input
-                        type="number"
-                        value={radToDeg(arm.initialAngle).toFixed(1)}
-                        step={5}
-                        onChange={(e) => {
-                          const v = Number(e.target.value) || 0;
-                          updateArm(index, "initialAngle", degToRad(v));
-                        }}
-                        style={{ width: "50px", marginLeft: "4px" }}
-                      />
-                    </label>
-
-                    {/* displayArm toggle */}
-                    <label
-                      style={{
-                        fontSize: "12px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={arm.displayArm}
-                        onChange={(e) =>
-                          updateArm(index, "displayArm", e.target.checked)
-                        }
-                      />
-                      show arm
-                    </label>
-
-                    {/* draw toggle */}
-                    <label
-                      style={{
-                        fontSize: "12px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={arm.draw}
-                        onChange={(e) =>
-                          updateArm(index, "draw", e.target.checked)
-                        }
-                      />
-                      draw trail
-                    </label>
-
-                    {/* line color */}
-                    <label
-                      style={{
-                        fontSize: "12px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                      }}
-                    >
-                      Color
-                      <input
-                        type="color"
-                        value={rgbToHex(arm.lineColor)}
-                        onChange={(e) => {
+                    <input
+                    type="checkbox"
+                    checked={arm.displayArm}
+                    onChange={(e) => updateArm(index, "displayArm", e.target.checked)}
+                    />
+                    show arm
+                  </label>
+                  
+                  {/* draw toggle */}
+                  <label
+                    style={{
+                      fontSize: "12px",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={arm.draw}
+                      onChange={(e) => updateArm(index, "draw", e.target.checked) }
+                    />
+                    draw trail
+                  </label>
+                  
+                  {/* line color */}
+                  <label
+                    style={{
+                      fontSize: "12px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    Color
+                    <input
+                      type="color"
+                      value={rgbToHex(arm.lineColor)}
+                      onChange={(e) => 
+                        {
                           const rgb = hexToRgb(e.target.value);
                           if (!rgb) return;
                           updateArm(index, "lineColor", rgb);
                         }}
-                        style={{ width: "32px", height: "18px", padding: 0 }}
-                      />
-                    </label>
-                  </div>
-                ))}
-              </div>
-            )}
+                      style={{ width: "32px", height: "18px", padding: 0 }}
+                    />
+                  </label>
+                </div>
+              ))}
+            </div>
+          }
           </section>
 
           {/* Right：Canvas （auto max width） */}
