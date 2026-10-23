@@ -2,7 +2,7 @@
 
 A web app for drawing interactive spirograph-style patterns using animated rotating arms. Configure multiple arms with custom lengths, speeds, and colors to generate beautiful Lissajous / spirograph curves in real time.
 
-![OrbitArms Preview](public/vite.svg)
+![OrbitArms Preview](public/draw.svg)
 
 ---
 
