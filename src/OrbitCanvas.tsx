@@ -7,6 +7,7 @@ interface OrbitCanvasProps {
   arms: Arm[];
   backgroundColor?: string;
   lineWidth?: number;
+  onExportImage?: (fn: () => void) => void;
 }
 
 type Point = { x: number; y: number };
@@ -20,6 +21,7 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
   arms,
   backgroundColor = "black",
   lineWidth = 1,
+  onExportImage,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -191,6 +193,62 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
   const handleClearCanvas = () => {
     setClearRequested(true);
   };
+
+  // Register the export function with the parent via the onExportImage prop
+  useEffect(() => {
+    if (!onExportImage) return;
+    onExportImage(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      const width = canvas.width;
+      const height = canvas.height;
+      const totalLength = arms.reduce((sum, arm) => sum + arm.length, 0);
+      const BASE_TOTAL_LENGTH = 200;
+
+      // ── Redraw trails only (no arms) ──
+      ctx.fillStyle = backgroundColor;
+      ctx.fillRect(0, 0, width, height);
+      ctx.save();
+      ctx.translate(width / 2, height / 2);
+      if (totalLength > 0) {
+        const marginRatio = 0.9;
+        const halfSize = Math.min(width, height) / 2 * marginRatio;
+        const maxScale = halfSize / BASE_TOTAL_LENGTH;
+        const autoScale = halfSize / totalLength;
+        const finalScale = Math.min(maxScale, autoScale) * zoom;
+        ctx.scale(finalScale, finalScale);
+      }
+      drawAllTrails(ctx, arms, trailMap, lineWidth);
+      ctx.restore();
+
+      // ── Capture PNG ──
+      const link = document.createElement("a");
+      link.download = "orbit-arms.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+
+      // ── Restore normal view (trails + arms) ──
+      ctx.fillStyle = backgroundColor;
+      ctx.fillRect(0, 0, width, height);
+      ctx.save();
+      ctx.translate(width / 2, height / 2);
+      if (totalLength > 0) {
+        const marginRatio = 0.9;
+        const halfSize = Math.min(width, height) / 2 * marginRatio;
+        const maxScale = halfSize / BASE_TOTAL_LENGTH;
+        const autoScale = halfSize / totalLength;
+        const finalScale = Math.min(maxScale, autoScale) * zoom;
+        ctx.scale(finalScale, finalScale);
+      }
+      drawAllTrails(ctx, arms, trailMap, lineWidth);
+      drawArms(ctx, arms, time, lineWidth);
+      ctx.restore();
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onExportImage, arms, backgroundColor, lineWidth, trailMap, zoom, time]);
 
   const ZOOM_STEP = 0.1;
   const ZOOM_MIN = 0.1;

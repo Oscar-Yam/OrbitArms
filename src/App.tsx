@@ -1,7 +1,8 @@
 // App.tsx
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import OrbitCanvas from "./OrbitCanvas";
 import { type Arm, createDefaultArm } from "./arm";
+import { encodeArms, decodeArms } from "./armCodec";
 
 const LENGTH_UNIT_PX = 20; // 1 unit = 20px
 
@@ -35,6 +36,68 @@ const App: React.FC = () => {
 
   // left Arms Settings Panel collapsed state
   const [panelCollapsed, setPanelCollapsed] = useState(false);
+
+  // Export image
+  const exportImageFnRef = useRef<(() => void) | null>(null);
+  const handleRegisterExport = (fn: () => void) => { exportImageFnRef.current = fn; };
+  const handleExportImage = () => { exportImageFnRef.current?.(); };
+
+  // Arms Code modal
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalFocusImport, setModalFocusImport] = useState(false);
+  const [importInput, setImportInput] = useState("");
+  const [importError, setImportError] = useState("");
+  const [copied, setCopied] = useState(false);
+  const importInputRef = useRef<HTMLTextAreaElement>(null);
+
+  // generate the passcode from current arms
+  const currentCode = encodeArms(arms);
+
+  const handleOpenExport = () => {
+    setImportInput("");
+    setImportError("");
+    setCopied(false);
+    setModalFocusImport(false);
+    setModalOpen(true);
+  };
+
+  const handleOpenImport = () => {
+    setImportInput("");
+    setImportError("");
+    setCopied(false);
+    setModalFocusImport(true);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setImportInput("");
+    setImportError("");
+  };
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(currentCode).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const handleLoadCode = () => {
+    try {
+      const loaded = decodeArms(importInput.trim());
+      setArms(loaded);
+      handleCloseModal();
+    } catch (e) {
+      setImportError((e as Error).message);
+    }
+  };
+
+  // focus the import textarea when modal opens in import mode
+  useEffect(() => {
+    if (modalOpen && modalFocusImport && importInputRef.current) {
+      importInputRef.current.focus();
+    }
+  }, [modalOpen, modalFocusImport]);
 
   const handleAddArm = () => {
     setArms((prev) => [
@@ -124,17 +187,130 @@ const App: React.FC = () => {
 
           {/* File actions */}
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <button style={{ fontSize: "12px" }} title="Export arm parameters as JSON">
+            <button style={{ fontSize: "12px" }} title="Export arm parameters as passcode" onClick={handleOpenExport}>
               ⬆ Export Arms
             </button>
-            <button style={{ fontSize: "12px" }} title="Import arm parameters from JSON">
+            <button style={{ fontSize: "12px" }} title="Import arm parameters from passcode" onClick={handleOpenImport}>
               ⬇ Import Arms
             </button>
-            <button style={{ fontSize: "12px" }} title="Export canvas as PNG image">
+            <button style={{ fontSize: "12px" }} title="Export canvas as PNG image" onClick={handleExportImage}>
               🖼 Export Image
             </button>
           </div>
         </section>
+
+        {/* ── Arms Code Modal ─────────────────────────────────────── */}
+        {modalOpen && (
+          <div
+            onClick={handleCloseModal}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.6)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 1000,
+            }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: "#1a1a1a",
+                color: "#f0f0f0",
+                border: "1px solid rgba(255,255,255,0.15)",
+                borderRadius: "8px",
+                padding: "24px",
+                width: "min(480px, 90vw)",
+                boxSizing: "border-box",
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px",
+              }}
+            >
+              {/* Modal title */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <h2 style={{ margin: 0, fontSize: "16px" }}>🎮 Orbit Arms Code</h2>
+                <button
+                  onClick={handleCloseModal}
+                  style={{ background: "transparent", border: "none", color: "#f0f0f0", fontSize: "18px", cursor: "pointer", lineHeight: 1 }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Export section */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <p style={{ margin: 0, fontSize: "12px", color: "#aaa" }}>Share or save your current arm setup:</p>
+                <textarea
+                  readOnly
+                  value={currentCode}
+                  rows={3}
+                  style={{
+                    width: "100%",
+                    boxSizing: "border-box",
+                    background: "#111",
+                    color: "#0ff",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    borderRadius: "4px",
+                    padding: "8px",
+                    fontSize: "11px",
+                    fontFamily: "monospace",
+                    resize: "none",
+                    wordBreak: "break-all",
+                  }}
+                />
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <button style={{ fontSize: "12px" }} onClick={handleCopyCode}>
+                    📋 Copy
+                  </button>
+                  {copied && <span style={{ fontSize: "12px", color: "#4f4" }}>✓ Copied!</span>}
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div style={{ height: "1px", background: "rgba(255,255,255,0.15)" }} />
+
+              {/* Import section */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <p style={{ margin: 0, fontSize: "12px", color: "#aaa" }}>Paste a code to load:</p>
+                <textarea
+                  ref={importInputRef}
+                  value={importInput}
+                  onChange={(e) => { setImportInput(e.target.value); setImportError(""); }}
+                  placeholder="Paste your Orbit Arms code here..."
+                  rows={3}
+                  style={{
+                    width: "100%",
+                    boxSizing: "border-box",
+                    background: "#111",
+                    color: "#f0f0f0",
+                    border: `1px solid ${importError ? "#f66" : "rgba(255,255,255,0.15)"}`,
+                    borderRadius: "4px",
+                    padding: "8px",
+                    fontSize: "11px",
+                    fontFamily: "monospace",
+                    resize: "none",
+                    wordBreak: "break-all",
+                  }}
+                />
+                {importError && (
+                  <p style={{ margin: 0, fontSize: "12px", color: "#f66" }}>⚠ {importError}</p>
+                )}
+              </div>
+
+              {/* Footer buttons */}
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+                <button style={{ fontSize: "12px" }} onClick={handleLoadCode} disabled={!importInput.trim()}>
+                  ⬇ Load
+                </button>
+                <button style={{ fontSize: "12px" }} onClick={handleCloseModal}>
+                  ✕ Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* main layout：left side Arms Panel，right side Canvas
             no stack*/}
@@ -406,6 +582,7 @@ const App: React.FC = () => {
               arms={arms}
               backgroundColor={backgroundColor}
               lineWidth={lineWidth}
+              onExportImage={handleRegisterExport}
             />
           </section>
         </div>
