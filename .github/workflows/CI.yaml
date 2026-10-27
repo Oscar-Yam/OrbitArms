@@ -56,9 +56,11 @@ jobs:
       - name: Upload build output as artifact for GitHub Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist  # build folder
+          path: dist  # build folder（如果唔係 dist 記得改）
 
   deploy:
+    # 只喺 push 到 main 嗰陣先 deploy，PR 會 skip 呢個 job
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build-and-test
     runs-on: ubuntu-latest
     environment:
