@@ -26,6 +26,7 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
   const [time, setTime] = useState(0);
   const [running, setRunning] = useState(true);
   const [clearRequested, setClearRequested] = useState(false);
+  const [zoom, setZoom] = useState(1);
 
   // key = arm.id, value = the arm's trail point'
   const [trailMap, setTrailMap] = useState<TrailMap>({});
@@ -138,7 +139,7 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
       const autoScale = halfSize / totalLength; // max reach = totalLength
 
       // never zoom in beyond baseline： maxScale
-      const finalScale = Math.min(maxScale, autoScale);
+      const finalScale = Math.min(maxScale, autoScale) * zoom;
     
       ctx.scale(finalScale, finalScale);
     }
@@ -150,7 +151,7 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
     drawArms(ctx, arms, time, lineWidth);
 
     ctx.restore();
-  }, [time, arms, backgroundColor, lineWidth, clearRequested, trailMap]);
+  }, [time, arms, backgroundColor, lineWidth, clearRequested, trailMap, zoom]);
 
   /* ─── 4. Resize ───────────────────────────────────────────── */
 
@@ -191,6 +192,36 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
     setClearRequested(true);
   };
 
+  const ZOOM_STEP = 0.1;
+  const ZOOM_MIN = 0.1;
+  const ZOOM_MAX = 10;
+
+  const handleZoomIn = () =>
+    setZoom((prev) => Math.min(ZOOM_MAX, parseFloat((prev + ZOOM_STEP).toFixed(2))));
+  const handleZoomOut = () =>
+    setZoom((prev) => Math.max(ZOOM_MIN, parseFloat((prev - ZOOM_STEP).toFixed(2))));
+  const handleZoomReset = () => setZoom(1);
+
+  const zoomLabel = `${Math.round(zoom * 100)}%`;
+
+  /* shared style for the floating zoom buttons */
+  const zoomBtnStyle: React.CSSProperties = {
+    width: "32px",
+    height: "32px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "rgba(40,40,40,0.85)",
+    color: "#f0f0f0",
+    border: "1px solid rgba(255,255,255,0.15)",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "16px",
+    lineHeight: 1,
+    userSelect: "none",
+    padding: 0,
+  };
+
   return (
     <div style={{ width: "100%" }}>
       <div
@@ -207,15 +238,55 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
         <button onClick={handleClearCanvas}>Clean Canvas</button>
       </div>
 
-      <canvas
-        ref={canvasRef}
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "block",
-          border: "1px solid #333",
-        }}
-      />
+      {/* Canvas wrapper — position:relative so we can overlay the zoom widget */}
+      <div style={{ position: "relative", width: "100%" }}>
+        <canvas
+          ref={canvasRef}
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "block",
+            border: "1px solid #333",
+          }}
+        />
+
+        {/* Floating zoom widget — bottom-right corner, like a map app */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "16px",
+            right: "16px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "4px",
+          }}
+        >
+          <button style={zoomBtnStyle} onClick={handleZoomIn} title="Zoom in">
+            +
+          </button>
+          <div
+            style={{
+              ...zoomBtnStyle,
+              fontSize: "11px",
+              cursor: "default",
+              letterSpacing: "-0.5px",
+            }}
+          >
+            {zoomLabel}
+          </div>
+          <button style={zoomBtnStyle} onClick={handleZoomOut} title="Zoom out">
+            −
+          </button>
+          <button
+            style={{ ...zoomBtnStyle, fontSize: "13px" }}
+            onClick={handleZoomReset}
+            title="Reset zoom"
+          >
+            ⟳
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
