@@ -173,7 +173,7 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
       ctx.fillStyle = backgroundColor;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // 轉尺寸時，清晒軌跡，時間不變
+      // clem canvas when resize, time remain unchange
       setTrailMap({});
     };
 
@@ -224,21 +224,7 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
 
   return (
     <div style={{ width: "100%" }}>
-      <div
-        style={{
-          display: "flex",
-          gap: "8px",
-          marginBottom: "8px",
-          justifyContent: "flex-start",
-        }}
-      >
-        <button onClick={handleTogglePlay}>
-          {running ? "Pause" : "Play"}
-        </button>
-        <button onClick={handleClearCanvas}>Clean Canvas</button>
-      </div>
-
-      {/* Canvas wrapper — position:relative so we can overlay the zoom widget */}
+      {/* Canvas wrapper — position:relative so we can overlay all controls */}
       <div style={{ position: "relative", width: "100%" }}>
         <canvas
           ref={canvasRef}
@@ -250,7 +236,7 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
           }}
         />
 
-        {/* Floating zoom widget — bottom-right corner, like a map app */}
+        {/* Unified floating control widget — bottom-right corner */}
         <div
           style={{
             position: "absolute",
@@ -262,6 +248,29 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
             gap: "4px",
           }}
         >
+          {/* Playback buttons */}
+          <button
+            style={zoomBtnStyle}
+            onClick={handleTogglePlay}
+            title={running ? "Pause" : "Play"}
+          >
+            {running ? "⏸" : "▶"}
+          </button>
+          <button style={zoomBtnStyle} onClick={handleClearCanvas} title="Clean Canvas">
+            🗑
+          </button>
+
+          {/* Divider */}
+          <div
+            style={{
+              width: "24px",
+              height: "1px",
+              background: "rgba(255,255,255,0.2)",
+              margin: "2px 0",
+            }}
+          />
+
+          {/* Zoom buttons */}
           <button style={zoomBtnStyle} onClick={handleZoomIn} title="Zoom in">
             +
           </button>
