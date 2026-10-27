@@ -100,35 +100,39 @@ const App: React.FC = () => {
           style={{
             display: "flex",
             flexWrap: "wrap",
-            gap: "12px",
+            gap: "16px",
             marginBottom: "16px",
             alignItems: "center",
           }}
         >
+          {/* Background color */}
+          <label style={{ fontSize: "12px", display: "flex", gap: "4px", alignItems: "center" }}>
+            Background:
+            <select
+              value={backgroundColor}
+              onChange={(e) =>
+                setBackgroundColor(e.target.value as "black" | "white")
+              }
+            >
+              <option value="black">Black</option>
+              <option value="white">White</option>
+            </select>
+          </label>
 
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              alignItems: "center",
-              flexWrap: "wrap",
-            }}
-          >
-            
+          {/* Divider */}
+          <div style={{ width: "1px", height: "20px", background: "rgba(255,255,255,0.2)" }} />
 
-            {/* background */}
-            <label style={{ fontSize: "12px", display: "flex", gap: "4px" }}>
-              Background:
-              <select
-                value={backgroundColor}
-                onChange={(e) =>
-                  setBackgroundColor(e.target.value as "black" | "white")
-                }
-              >
-                <option value="black">Black</option>
-                <option value="white">White</option>
-              </select>
-            </label>
+          {/* File actions */}
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <button style={{ fontSize: "12px" }} title="Export arm parameters as JSON">
+              ⬆ Export Arms
+            </button>
+            <button style={{ fontSize: "12px" }} title="Import arm parameters from JSON">
+              ⬇ Import Arms
+            </button>
+            <button style={{ fontSize: "12px" }} title="Export canvas as PNG image">
+              🖼 Export Image
+            </button>
           </div>
         </section>
 
