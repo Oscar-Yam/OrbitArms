@@ -113,13 +113,13 @@ const Page2D: React.FC = () => {
         padding: "16px",
         boxSizing: "border-box",
         overflowX: "auto",
-        height: "calc(100vh - 75px)",
-        border: "2px solid orange", /* 🟠 Page2D root */
+        height: "calc(100vh - 71px)",
+
       }}
     >
       {/* Header + Global controls */}
       <section
-        style={{ display: "flex", flexWrap: "wrap", gap: "16px", marginBottom: "16px", alignItems: "center", border: "2px solid yellow" /* 🟡 Header controls */ }}
+        style={{ display: "flex", flexWrap: "wrap", gap: "16px", marginBottom: "16px", alignItems: "center" }}
       >
         <label style={{ fontSize: "12px", display: "flex", gap: "4px", alignItems: "center" }}>
           Background:
@@ -167,11 +167,11 @@ const Page2D: React.FC = () => {
       )}
 
       {/* ── Main layout: left panel + canvas ───────────────────── */}
-      <div style={{ maxHeight:"850px", display: "flex", flexDirection: "row", flexWrap: "nowrap", gap: "16px", alignItems: "stretch", minWidth: panelCollapsed ? 640 : 800, border: "2px solid cyan" /* 🔵 Main layout row */ }}>
+      <div style={{ height:"calc(100vh - 163px)", display: "flex", flexDirection: "row", flexWrap: "nowrap", gap: "16px", alignItems: "stretch", minWidth: panelCollapsed ? 640 : 800,  }}>
 
         {/* Panel: collapsible */}
         <section
-          style={{ flex: "0 0 auto", width: panelCollapsed ? 165 : 400, border: "3px solid lime", borderRadius: "4px", background: backgroundColor === "black" ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.6)", padding: "8px", boxSizing: "border-box" /* 🟢 Arms panel */ }}
+          style={{ flex: "0 0 auto", width: panelCollapsed ? 165 : 400, border: "1px solid rgba(255,255,255,0.2)", borderRadius: "4px", background: backgroundColor === "black" ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.6)", padding: "8px", boxSizing: "border-box" }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
             <h2 style={{ fontSize: "14px", margin: 0, paddingBottom: 4, borderBottom: "1px solid rgba(255,255,255,0.2)", whiteSpace: "nowrap" }}>Arms Settings</h2>
@@ -181,12 +181,12 @@ const Page2D: React.FC = () => {
           </div>
 
           {panelCollapsed ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap", maxHeight:"850px"}}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap"}}>
               <button onClick={handleAddArm} style={{ fontSize: "11px", padding: "2px 6px" }}>+ Arm</button>
               <button onClick={handleRemoveLastArm} disabled={arms.length <= 1} style={{ fontSize: "11px", padding: "2px 6px", opacity: arms.length <= 1 ? 0.5 : 1 }}>- Last</button>
             </div>
           ) : (
-            <div style={{overflowY:"auto", display: "flex", flexDirection: "column", gap: "8px", marginTop: "4px", maxHeight:"850px" }}>
+            <div style={{overflowY:"auto", display: "flex", flexDirection: "column", gap: "8px", marginTop: "4px", maxHeight:"calc(100vh - 200px)" }}>
               <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                 <button onClick={handleAddArm} style={{ fontSize: "11px" }}>Add Arm</button>
                 <button onClick={handleRemoveLastArm} style={{ fontSize: "11px" }} disabled={arms.length <= 1}>Remove Last Arm</button>
@@ -236,7 +236,7 @@ const Page2D: React.FC = () => {
         </section>
 
         {/* Right: Canvas (auto max width) */}
-        <section style={{ flex: "1 1 auto", minWidth: 360, border: "2px solid magenta" /* 🟣 Canvas section */ }}>
+        <section style={{ flex: "1 1 auto", minWidth: 360,  }}>
           <OrbitCanvas arms={arms} backgroundColor={backgroundColor} lineWidth={lineWidth} onExportImage={handleRegisterExport} />
         </section>
       </div>
