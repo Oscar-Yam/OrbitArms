@@ -5,6 +5,7 @@ import type { Arm3D } from "../arm3d";
 import { getArmSegments3D, projectPerspective, depthOpacity } from "../armMath3d";
 import type { Point3D } from "../armMath3d";
 import { encodeArms3D, decodeArms3D } from "../armCodec3d";
+import NumericInput from "../components/NumericInput";
 
 const FOCAL_LENGTH = 600;
 
@@ -371,14 +372,14 @@ const Page3D: React.FC = () => {
                 <button onClick={handleRemoveLastArm} disabled={arms.length === 0} style={{ fontSize: "11px" }}>Remove Last</button>
                 <label style={{ fontSize: "12px", display: "flex", alignItems: "center", gap: "4px" }}>
                   Trail width
-                  <input type="number" value={lineWidth} min={0.5} max={5} step={0.5}
-                    onChange={(e) => setLineWidth(Number(e.target.value) || 1)}
+                  <NumericInput value={lineWidth} min={0.5} max={5} step={0.5}
+                    onChange={(v) => setLineWidth(v)}
                     style={{ width: "36px" }} />
                 </label>
                 <label style={{ fontSize: "12px", display: "flex", alignItems: "center", gap: "4px" }}>
                   Trail length
-                  <input type="number" value={trailLength} min={100} max={10000} step={100}
-                    onChange={(e) => setTrailLength(Math.max(100, Math.min(10000, Number(e.target.value) || 3000)))}
+                  <NumericInput value={trailLength} min={100} max={10000} step={100}
+                    onChange={(v) => setTrailLength(v)}
                     style={{ width: "52px" }} />
                   dots
                 </label>
@@ -388,38 +389,38 @@ const Page3D: React.FC = () => {
                     padding: "6px 4px", borderRadius: "4px", background: backgroundColor === "black" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.04)" }}>
                   <div style={{ minWidth: "26px", fontWeight: 600, fontSize: "12px", marginRight: "4px" }}>#{index + 1}</div>
                   <label style={{ fontSize: "12px" }}>Length
-                    <input type="number" min={1} max={50} step={1} value={arm.length / LENGTH_UNIT_PX}
-                      onChange={(e) => { const u=Number(e.target.value)||0; updateArm(index,"length",Math.max(1,Math.min(50,u))*LENGTH_UNIT_PX); }}
+                    <NumericInput min={1} max={50} step={1} value={arm.length / LENGTH_UNIT_PX}
+                      onChange={(v) => updateArm(index,"length",Math.max(1,Math.min(50,v))*LENGTH_UNIT_PX)}
                       style={{ width: "31px", marginLeft: "4px" }} />
                   </label>
                   <label style={{ fontSize: "12px" }}>ωX°/s
-                    <input type="number" step={5} value={radToDeg(arm.angularVelocityX).toFixed(1)}
-                      onChange={(e) => updateArm(index,"angularVelocityX",degToRad(Number(e.target.value)||0))}
+                    <NumericInput step={5} value={radToDeg(arm.angularVelocityX)}
+                      onChange={(v) => updateArm(index,"angularVelocityX",degToRad(v))}
                       style={{ width: "51px", marginLeft: "4px" }} />
                   </label>
                   <label style={{ fontSize: "12px" }}>ωY°/s
-                    <input type="number" step={5} value={radToDeg(arm.angularVelocityY).toFixed(1)}
-                      onChange={(e) => updateArm(index,"angularVelocityY",degToRad(Number(e.target.value)||0))}
+                    <NumericInput step={5} value={radToDeg(arm.angularVelocityY)}
+                      onChange={(v) => updateArm(index,"angularVelocityY",degToRad(v))}
                       style={{ width: "51px", marginLeft: "4px" }} />
                   </label>
                   <label style={{ fontSize: "12px" }}>ωZ°/s
-                    <input type="number" step={5} value={radToDeg(arm.angularVelocityZ).toFixed(1)}
-                      onChange={(e) => updateArm(index,"angularVelocityZ",degToRad(Number(e.target.value)||0))}
+                    <NumericInput step={5} value={radToDeg(arm.angularVelocityZ)}
+                      onChange={(v) => updateArm(index,"angularVelocityZ",degToRad(v))}
                       style={{ width: "51px", marginLeft: "4px" }} />
                   </label>
                   <label style={{ fontSize: "12px" }}>θ₀X°
-                    <input type="number" step={5} value={radToDeg(arm.initialAngleX).toFixed(1)}
-                      onChange={(e) => updateArm(index,"initialAngleX",degToRad(Number(e.target.value)||0))}
+                    <NumericInput step={5} value={radToDeg(arm.initialAngleX)}
+                      onChange={(v) => updateArm(index,"initialAngleX",degToRad(v))}
                       style={{ width: "50px", marginLeft: "4px" }} />
                   </label>
                   <label style={{ fontSize: "12px" }}>θ₀Y°
-                    <input type="number" step={5} value={radToDeg(arm.initialAngleY).toFixed(1)}
-                      onChange={(e) => updateArm(index,"initialAngleY",degToRad(Number(e.target.value)||0))}
+                    <NumericInput step={5} value={radToDeg(arm.initialAngleY)}
+                      onChange={(v) => updateArm(index,"initialAngleY",degToRad(v))}
                       style={{ width: "50px", marginLeft: "4px" }} />
                   </label>
                   <label style={{ fontSize: "12px" }}>θ₀Z°
-                    <input type="number" step={5} value={radToDeg(arm.initialAngleZ).toFixed(1)}
-                      onChange={(e) => updateArm(index,"initialAngleZ",degToRad(Number(e.target.value)||0))}
+                    <NumericInput step={5} value={radToDeg(arm.initialAngleZ)}
+                      onChange={(v) => updateArm(index,"initialAngleZ",degToRad(v))}
                       style={{ width: "50px", marginLeft: "4px" }} />
                   </label>
                   <label style={{ fontSize: "12px", display: "flex", alignItems: "center" }}>

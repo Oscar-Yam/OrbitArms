@@ -1,6 +1,7 @@
 // Page2D.tsx
 import React, { useState, useRef, useEffect } from "react";
 import OrbitCanvas from "../OrbitCanvas";
+import NumericInput from "../components/NumericInput";
 import { type Arm, createDefaultArm } from "../arm";
 import { encodeArms, decodeArms } from "../armCodec";
 
@@ -199,20 +200,20 @@ const Page2D: React.FC = () => {
                   <div style={{ minWidth: "26px", fontWeight: 600, fontSize: "12px", marginRight: "4px" }}>#{index + 1}</div>
                   <label style={{ fontSize: "12px" }}>
                     Length
-                    <input type="number" min={1} max={50} step={1} value={arm.length / LENGTH_UNIT_PX}
-                      onChange={(e) => { const unit = Number(e.target.value) || 0; const clamped = Math.max(1, Math.min(50, unit)); updateArm(index, "length", clamped * LENGTH_UNIT_PX); }}
+                    <NumericInput min={1} max={50} step={1} value={arm.length / LENGTH_UNIT_PX}
+                      onChange={(v) => { const clamped = Math.max(1, Math.min(50, v)); updateArm(index, "length", clamped * LENGTH_UNIT_PX); }}
                       style={{ width: "31px", marginLeft: "4px" }} />
                   </label>
                   <label style={{ fontSize: "12px" }}>
                     ω (deg/s)
-                    <input type="number" value={((arm.angularVelocity * 180) / Math.PI).toFixed(1)} step={5}
-                      onChange={(e) => { const v = Number(e.target.value) || 0; updateArm(index, "angularVelocity", degToRad(v)); }}
+                    <NumericInput value={radToDeg(arm.angularVelocity)} step={5}
+                      onChange={(v) => updateArm(index, "angularVelocity", degToRad(v))}
                       style={{ width: "51px", marginLeft: "4px" }} />
                   </label>
                   <label style={{ fontSize: "12px" }}>
                     θ₀ (deg)
-                    <input type="number" value={radToDeg(arm.initialAngle).toFixed(1)} step={5}
-                      onChange={(e) => { const v = Number(e.target.value) || 0; updateArm(index, "initialAngle", degToRad(v)); }}
+                    <NumericInput value={radToDeg(arm.initialAngle)} step={5}
+                      onChange={(v) => updateArm(index, "initialAngle", degToRad(v))}
                       style={{ width: "50px", marginLeft: "4px" }} />
                   </label>
                   <label style={{ fontSize: "12px", display: "flex", alignItems: "center" }}>
