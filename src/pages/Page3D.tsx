@@ -51,6 +51,9 @@ const Page3D: React.FC = () => {
   const [backgroundColor, setBackgroundColor] = useState<"black" | "white">("black");
   const backgroundColorRef = useRef<"black" | "white">("black");
   useEffect(() => { backgroundColorRef.current = backgroundColor; }, [backgroundColor]);
+  const [showAxes, setShowAxes] = useState(true);
+  const showAxesRef = useRef(true);
+  useEffect(() => { showAxesRef.current = showAxes; }, [showAxes]);
 
   // Arms Code modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -109,9 +112,16 @@ const Page3D: React.FC = () => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const resize = () => { const rect = canvas.getBoundingClientRect(); canvas.width = rect.width; canvas.height = rect.height; };
+    const resize = () => {
+      const parent = canvas.parentElement;
+      if (!parent) return;
+      const rect = parent.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+    };
     resize();
-    window.addEventListener("resize", resize);
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas.parentElement!);
     const onMouseDown = (e: MouseEvent) => { dragRef.current = { x: e.clientX, y: e.clientY }; };
     const onMouseMove = (e: MouseEvent) => {
       if (!dragRef.current) return;
@@ -139,6 +149,12 @@ const Page3D: React.FC = () => {
       const ctx = canvas.getContext("2d"); if (!ctx) return;
       const W = canvas.width; const H = canvas.height;
       const cx = W / 2; const cy = H / 2;
+      // Auto-scale: same logic as 2D OrbitCanvas — fit total arm reach into 90% of canvas
+      const BASE_TOTAL_LENGTH = 200;
+      const halfSize = Math.min(W, H) / 2 * 0.9;
+      const autoScale  = halfSize / maxReach;
+      const maxScale   = halfSize / BASE_TOTAL_LENGTH;
+      const finalScale = Math.min(maxScale, autoScale);
       ctx.fillStyle = backgroundColorRef.current === "black" ? "#111" : "#eee"; ctx.fillRect(0, 0, W, H);
       const joints = getArmSegments3D(currentArms, t);
       if (runningRef.current) {
@@ -164,8 +180,8 @@ const Page3D: React.FC = () => {
           ctx.beginPath();
           ctx.strokeStyle = `rgba(${c.r},${c.g},${c.b},${opacity.toFixed(3)})`;
           ctx.lineWidth = lw;
-          ctx.moveTo(cx + p0.sx, cy + p0.sy);
-          ctx.lineTo(cx + p1.sx, cy + p1.sy);
+          ctx.moveTo(cx + p0.sx * finalScale, cy + p0.sy * finalScale);
+          ctx.lineTo(cx + p1.sx * finalScale, cy + p1.sy * finalScale);
           ctx.stroke();
         }
       });
@@ -180,8 +196,8 @@ const Page3D: React.FC = () => {
         ctx.beginPath();
         ctx.strokeStyle = `rgba(${c.r},${c.g},${c.b},${opacity.toFixed(3)})`;
         ctx.lineWidth = lw * 2;
-        ctx.moveTo(cx + p0.sx, cy + p0.sy);
-        ctx.lineTo(cx + p1.sx, cy + p1.sy);
+        ctx.moveTo(cx + p0.sx * finalScale, cy + p0.sy * finalScale);
+        ctx.lineTo(cx + p1.sx * finalScale, cy + p1.sy * finalScale);
         ctx.stroke();
       });
       joints.forEach((pt) => {
@@ -189,16 +205,44 @@ const Page3D: React.FC = () => {
         const { sx, sy } = projectPerspective(r, FOCAL_LENGTH);
         const opacity = depthOpacity(r.z, maxReach);
         ctx.beginPath();
-        ctx.arc(cx + sx, cy + sy, 3, 0, Math.PI * 2);
+        ctx.arc(cx + sx * finalScale, cy + sy * finalScale, 3, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(255,255,255,${opacity.toFixed(3)})`;
         ctx.fill();
       });
+
+      // ── 3-axis indicator (origin = start of arm chain) ──────────
+      if (showAxesRef.current) {
+        const axisLen = 360 * 0.25;
+        const axes: { dir: Point3D; color: string; label: string }[] = [
+          { dir: { x: axisLen, y: 0, z: 0 }, color: "#ff5555", label: "X" },
+          { dir: { x: 0, y: axisLen, z: 0 }, color: "#55ff55", label: "Y" },
+          { dir: { x: 0, y: 0, z: axisLen }, color: "#5599ff", label: "Z" },
+        ];
+        ctx.save();
+        ctx.lineWidth = 1.5;
+        axes.forEach(({ dir, color, label }) => {
+          const rTip = applyCamera(dir, yaw, pitch);
+          const tip  = projectPerspective(rTip, FOCAL_LENGTH);
+          const tx = cx + tip.sx * finalScale;
+          const ty = cy + tip.sy * finalScale;
+          ctx.beginPath();
+          ctx.strokeStyle = color;
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(tx, ty);
+          ctx.stroke();
+          ctx.fillStyle = color;
+          ctx.font = "bold 11px sans-serif";
+          ctx.fillText(label, tx + 4, ty + 4);
+        });
+        ctx.restore();
+      }
+
       rafRef.current = requestAnimationFrame(loop);
     };
     rafRef.current = requestAnimationFrame(loop);
     return () => {
       cancelAnimationFrame(rafRef.current);
-      window.removeEventListener("resize", resize);
+      ro.disconnect();
       canvas.removeEventListener("mousedown", onMouseDown);
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
@@ -252,6 +296,11 @@ const Page3D: React.FC = () => {
             <option value="black">Black</option>
             <option value="white">White</option>
           </select>
+        </label>
+        <div style={{ width: "1px", height: "20px", background: "rgba(255,255,255,0.2)" }} />
+        <label style={{ fontSize: "12px", display: "flex", alignItems: "center", gap: "4px", cursor: "pointer" }}>
+          <input type="checkbox" checked={showAxes} onChange={(e) => setShowAxes(e.target.checked)} />
+          Show Axes
         </label>
         <div style={{ width: "1px", height: "20px", background: "rgba(255,255,255,0.2)" }} />
         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
