@@ -167,7 +167,7 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
 
       const rect = parent.getBoundingClientRect();
       canvas.width = rect.width;
-      canvas.height = rect.height*0.85;
+      canvas.height = rect.height;
 
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
@@ -281,7 +281,7 @@ const OrbitCanvas: React.FC<OrbitCanvasProps> = ({
   };
 
   return (
-    <div style={{ width: "100%" }}>
+    <div style={{ width: "100%", }}>
       {/* Canvas wrapper — position:relative so we can overlay all controls */}
       <div style={{ position: "relative", width: "100%" }}>
         <canvas
